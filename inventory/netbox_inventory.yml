@@ -10,4 +10,4 @@ group_by:
   - device_roles
 
 compose:
-  ansible_host: primary_ip4.address
+  ansible_host: primary_ip.address
