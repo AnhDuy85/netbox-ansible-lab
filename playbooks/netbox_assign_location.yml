@@ -1,0 +1,33 @@
+- name: Auto assign location based on site
+  hosts: localhost
+  connection: local
+  gather_facts: no
+
+  vars:
+    netbox_url: "{{ lookup('env', 'NETBOX_URL') }}"
+    netbox_token: "{{ lookup('env', 'NETBOX_TOKEN') }}"
+
+    site_location_map:
+      AUTO-SYNC: floor-4
+      DR-HAN-01: floor-1
+
+  tasks:
+    - name: Get all devices from NetBox
+      uri:
+        url: "{{ netbox_url }}/api/dcim/devices/?limit=0"
+        method: GET
+        headers:
+          Authorization: "Token {{ netbox_token }}"
+        return_content: yes
+      register: devices
+
+    - name: Assign location
+      netbox.netbox.netbox_device:
+        netbox_url: "{{ netbox_url }}"
+        netbox_token: "{{ netbox_token }}"
+        data:
+          name: "{{ item.name }}"
+          location: "{{ site_location_map[item.site.name] }}"
+        state: present
+      loop: "{{ devices.json.results }}"
+      when: item.site.name in site_location_map
