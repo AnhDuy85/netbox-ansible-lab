@@ -1,0 +1,7 @@
+---
+- name: Test NetBox Connection
+  hosts: all
+  gather_facts: false
+  tasks:
+    - name: Ping thiết bị
+      ansible.builtin.ping:
