@@ -12,22 +12,39 @@
       DR-HAN-01: floor-1
 
   tasks:
-    - name: Get all devices from NetBox
-      uri:
-        url: "{{ netbox_url }}/api/dcim/devices/?limit=0"
-        method: GET
-        headers:
-          Authorization: "Token {{ netbox_token }}"
-        return_content: yes
-      register: devices
 
-    - name: Assign location
+    # 1. Lấy device từ NetBox (chuẩn, không dùng uri)
+    - name: Get devices from NetBox
+      set_fact:
+        devices: >-
+          {{ query('netbox.netbox.nb_lookup', 'devices',
+            api_endpoint=netbox_url,
+            token=netbox_token,
+            validate_certs=False) }}
+
+    # 2. Update location (có kiểm tra để tránh update thừa)
+    - name: Assign location based on site
       netbox.netbox.netbox_device:
         netbox_url: "{{ netbox_url }}"
         netbox_token: "{{ netbox_token }}"
+        validate_certs: false
         data:
-          name: "{{ item.name }}"
-          location: "{{ site_location_map[item.site.name] }}"
+          name: "{{ item.value.name }}"
+          location: "{{ site_location_map[item.value.site.name] }}"
         state: present
-      loop: "{{ devices.json.results }}"
-      when: item.site.name in site_location_map
+      loop: "{{ devices }}"
+      when:
+        - item.value.site is defined
+        - item.value.site.name in site_location_map
+        - item.value.status.value == "active"
+        - item.value.location is not defined
+          or item.value.location.name != site_location_map[item.value.site.name]
+
+    # 3. Debug log (giúp kiểm tra)
+    - name: Show updated devices
+      debug:
+        msg: "Updated {{ item.value.name }} → {{ site_location_map[item.value.site.name] }}"
+      loop: "{{ devices }}"
+      when:
+        - item.value.site is defined
+        - item.value.site.name in site_location_map
