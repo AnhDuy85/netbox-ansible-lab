@@ -1,18 +1,35 @@
 ---
 plugin: netbox.netbox.nb_inventory
 
+# NetBox API
 api_endpoint: http://10.4.198.198:8080
+# Dùng credential trong AWX (khuyến nghị)
+# Nếu dùng ENV thì giữ dòng dưới, nếu dùng Credential thì có thể bỏ
 token: "{{ lookup('env', 'NETBOX_TOKEN') }}"
+
 validate_certs: false
 
+# Không load config_context để tăng tốc
 config_context: false
 
+# Tránh lỗi group name (có dấu cách, ký tự đặc biệt)
+strict: false
+
+# Filter chỉ lấy device hợp lệ
+query_filters:
+  - status: active
+  - has_primary_ip: 'true'
+
+# Group động theo nhiều chiều
 group_by:
   - sites
   - device_roles
+  - tenants
+  - platforms
 
-query_filters:
-  - status: active
-
+# Map IP cho Ansible
 compose:
-  ansible_host: primary_ip4.address | default(name)
+  ansible_host: primary_ip4.address | default(primary_ip.address) | default(name)
+
+# Optional: nếu muốn lấy cả VM
+# want_virtual: true
