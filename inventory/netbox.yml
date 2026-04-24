@@ -2,6 +2,8 @@
 plugin: netbox.netbox.nb_inventory
 api_endpoint: http://10.4.198.198:8080
 validate_certs: false
+# Thêm cấu trúc này để đảm bảo parser luôn nhận diện đúng
+config_context: false
 group_by:
   - site
   - device_roles
