@@ -33,3 +33,4 @@ compose:
 
 # Optional: nếu muốn lấy cả VM
 # want_virtual: true
+group_names_raw: false
