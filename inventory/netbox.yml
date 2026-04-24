@@ -1,11 +1,18 @@
 ---
 plugin: netbox.netbox.nb_inventory
+
 api_endpoint: http://10.4.198.198:8080
+token: "{{ lookup('env', 'NETBOX_TOKEN') }}"
 validate_certs: false
-# Thêm cấu trúc này để đảm bảo parser luôn nhận diện đúng
+
 config_context: false
+
 group_by:
-  - site
+  - sites
   - device_roles
+
+query_filters:
+  - status: active
+
 compose:
-  ansible_host: primary_ip4.address
+  ansible_host: primary_ip4.address | default(name)
